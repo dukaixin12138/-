@@ -13,7 +13,6 @@ const config = useRuntimeConfig()
 const route = useRoute()
 
 const siteName = computed(() => String(config.public.siteName))
-const initial = computed(() => siteName.value.slice(0, 1) || 'B')
 
 /*
  * 图标统一用 Phosphor：它的 weight 属性支持在 regular / bold / fill 间切换，
@@ -50,13 +49,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 <template>
   <!-- 桌面端：左侧固定 rail，取代传统的顶部导航栏 -->
   <aside class="site-rail" aria-label="站点导航">
+    <!-- 与 favicon 同一个图标文件，保证标签页与站内标识一致 -->
     <NuxtLink
       to="/"
       title="返回首页"
-      class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-slate-900 text-base font-semibold text-white transition-colors duration-200 hover:bg-brand-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-brand-500"
+      class="block h-10 w-10 cursor-pointer transition-transform duration-200 hover:scale-105"
       :aria-label="siteName"
     >
-      {{ initial }}
+      <img :src="'/icon.svg'" :alt="siteName" width="40" height="40" class="h-10 w-10">
     </NuxtLink>
 
     <nav class="flex flex-col items-center gap-1">

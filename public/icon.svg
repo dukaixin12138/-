@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="博客">
+  <title>博客</title>
+  <!--
+    设计说明：
+    用三条长短不等的横线抽象「文章列表」——这正是本站编辑式版式的核心元素（编号行列表）。
+    最后一根用品牌蓝，呼应正站里「当前项高亮」的交互；圆角深底保证在浅色浏览器标签栏上足够清晰。
+    全程无渐变、无细线，缩到 16px 仍能分辨，适合做 favicon。
+  -->
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+
+  <!-- 第一行：标题，最长最亮 -->
+  <rect x="16" y="18.5" width="32" height="5.5" rx="2.75" fill="#f8fafc"/>
+
+  <!-- 第二行：正文，稍短稍暗，制造层次 -->
+  <rect x="16" y="29.25" width="20" height="5.5" rx="2.75" fill="#f8fafc" opacity="0.5"/>
+
+  <!-- 第三行：高亮行，品牌蓝 -->
+  <rect x="16" y="40" width="26" height="5.5" rx="2.75" fill="#3b82f6"/>
+</svg>

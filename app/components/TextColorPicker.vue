@@ -12,11 +12,34 @@ withDefaults(
   { placement: 'bottom' },
 )
 
-const { textColor, isCustom, setTextColor, resetTextColor, restoreTextColor } = useTextColor()
+const {
+  textColor,
+  resolvedColor,
+  isCustom,
+  isAdjusted,
+  setTextColor,
+  resetTextColor,
+  restoreTextColor,
+} = useTextColor()
+
+const { isDark } = useTheme()
 
 const open = ref(false)
 const customColor = ref('#60a5fa')
 const root = ref<HTMLElement | null>(null)
+
+/**
+ * 色板显示的是「当前模式下实际会生效的颜色」，而不是原始色值。
+ * 直接显示原色会误导：比如「纯白」在浅色模式下实际是深灰，
+ * 用户点之前看到的和点之后得到的不一致。
+ */
+const presetSwatches = computed(() =>
+  TEXT_COLOR_PRESETS.map((preset) => {
+    const pair = buildTextColorPair(preset.value)
+    const shown = isDark.value ? pair.dark : pair.light
+    return { ...preset, shown, adjusted: shown !== pair.intent }
+  }),
+)
 
 /** 打开时把当前色同步进取色器，避免显示与现状不符 */
 watch(open, (value) => {
@@ -76,11 +99,11 @@ onUnmounted(() => {
     >
       <PhTextAa :size="19" />
 
-      <!-- 已自定义时给个色点，一眼看出当前生效的颜色 -->
+      <!-- 已自定义时给个色点，显示的是「当前模式下真正生效」的颜色 -->
       <span
         v-if="isCustom"
         class="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-950"
-        :style="{ background: textColor }"
+        :style="{ background: resolvedColor }"
         aria-hidden="true"
       />
     </button>
@@ -112,13 +135,17 @@ onUnmounted(() => {
 
         <div class="grid grid-cols-6 gap-1.5">
           <button
-            v-for="preset in TEXT_COLOR_PRESETS"
+            v-for="preset in presetSwatches"
             :key="preset.value"
             type="button"
-            :title="preset.name"
+            :title="
+              preset.adjusted
+                ? `${preset.name}（当前模式下自动调整为 ${preset.shown}）`
+                : preset.name
+            "
             class="h-7 w-full cursor-pointer rounded-md ring-1 ring-black/10 transition-transform duration-150 hover:scale-110 dark:ring-white/15"
             :class="textColor === preset.value ? 'outline-2 outline-offset-1 outline-brand-500' : ''"
-            :style="{ background: preset.value }"
+            :style="{ background: preset.shown }"
             @click="select(preset.value)"
           />
         </div>
@@ -140,8 +167,16 @@ onUnmounted(() => {
           </label>
         </div>
 
+        <p
+          v-if="isAdjusted"
+          class="mt-3 rounded-md bg-slate-100 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+        >
+          当前为{{ isDark ? '深色' : '浅色' }}模式，已自动调整为
+          <span class="font-mono" :style="{ color: resolvedColor }">{{ resolvedColor }}</span>
+        </p>
+
         <p class="mt-2.5 text-[11px] leading-relaxed text-slate-400">
-          仅调整文字，不影响背景与强调色。
+          仅调整文字，不影响背景与强调色。切换深浅色时会自动调亮或调暗，保证始终看得清。
         </p>
       </div>
     </Transition>

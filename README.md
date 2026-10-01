@@ -1,24 +1,33 @@
-# 博客系统
+<div align="center">
+  <img src="./public/icon.svg" alt="博客系统图标" width="96" height="96">
+  <h1>博客系统</h1>
+  <p>基于 Nuxt 4 的全栈博客，前台展示 + 后台管理一体，支持在线 Markdown 写作。</p>
+</div>
 
-基于 Nuxt 4 的全栈博客，前台展示 + 后台管理一体，支持在线 Markdown 写作。
+---
+
+> **图标含义**：三条长短不等的横线代表「文章列表」，也正是本站编辑式版式的核心元素；
+> 最后一根用品牌蓝，呼应正站里「当前项高亮」的交互。纯几何、无细线，缩到 16px 仍可辨认。
 
 ## 技术栈
 
 | 层 | 选型 |
 |---|---|
-| 框架 | Nuxt 4.5（SSR / SSR 与 Nitro 后端一体） |
+| 框架 | Nuxt 4.5（SSR 与 Nitro 后端一体） |
 | 语言 | TypeScript |
 | 样式 | Tailwind CSS v4（`@tailwindcss/vite`） |
-| 图标 | lucide-vue-next |
+| 版式 | 编辑式（Swiss）：左侧固定 rail + 编号行列表，无卡片化 |
+| 图标 | Phosphor Icons（导航区，支持 fill/regular 切换）+ Lucide（功能图标） |
 | 数据库 | MySQL 8+ / 26.x |
 | ORM | Prisma 6 |
-| 鉴权 | nuxt-auth-utils（Sealed Cookie Session） |
-| Markdown | markdown-it + Shiki（双主题代码高亮） |
+| 鉴权 | nuxt-auth-utils（Sealed Cookie Session）+ scrypt 口令哈希 |
+| Markdown | markdown-it + Shiki（双主题代码高亮，结果按 slug 缓存） |
 | 编辑器 | md-editor-v3 |
-| 搜索 | MySQL FULLTEXT + ngram 解析器（服务端全文检索，支持中文分词） |
+| 搜索 | MySQL FULLTEXT + ngram 解析器（中文分词，无命中时回退 LIKE） |
 | 动画 | @vueuse/motion（声明式 v-motion）+ AutoAnimate（列表增删自动补间） |
 | 路由进度条 | NProgress（页面切换时的顶部指示条，配色已适配明暗模式） |
-| 动态背景 | 5 套可切换主题：金色流星（原生 Canvas）+ Vanta.js 的 NET / DOTS / FOG / WAVES |
+| 动态背景 | 5 套可切换主题：金色流星（原生 Canvas + 星图层）+ Vanta.js 的 NET / DOTS / FOG / WAVES |
+| 外观自定义 | 明暗模式、动态背景主题、全站字体颜色，三者均持久化并防首屏闪烁 |
 
 ## 快速开始
 
