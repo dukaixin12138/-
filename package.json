@@ -1,0 +1,49 @@
+{
+  "name": "my-blog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "prisma generate",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "node prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@formkit/auto-animate": "^0.10.0",
+    "@phosphor-icons/vue": "^2.2.1",
+    "@prisma/client": "^6.19.3",
+    "@vueuse/motion": "^3.0.3",
+    "isomorphic-dompurify": "^4.3.0",
+    "lucide-vue-next": "^0.577.0",
+    "markdown-it": "^15.0.2",
+    "md-editor-v3": "^7.0.0",
+    "nprogress": "^0.2.0",
+    "nuxt": "^4.5.2",
+    "nuxt-auth-utils": "^0.5.30",
+    "shiki": "^4.4.3",
+    "three": "^0.134.0",
+    "vanta": "^0.5.24",
+    "vue": "^3.5.43",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^26.6.2",
+    "@types/nprogress": "^0.2.3",
+    "@types/three": "^0.134.0",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1",
+    "vue-tsc": "^3.3.11"
+  }
+}

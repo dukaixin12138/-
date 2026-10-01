@@ -1,0 +1,651 @@
+@import "tailwindcss";
+
+/* 暗色模式改为 class 驱动，便于手动切换 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", Georgia, "Songti SC", "SimSun", serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 30px -18px rgb(15 23 42 / 0.25);
+}
+
+@layer base {
+  html {
+    /*
+      不要在这里设 scroll-behavior: smooth。
+      它是全局生效的，会让路由切换时的「回到顶部」也变成平滑滚动 ——
+      长文页面上要滚好几秒，中途还可能被新页面替换，表现为滚动位置没归位。
+      滚动行为统一交给 nuxt.config 的 router.options.scrollBehavior 控制：
+      锚点平滑滚动、路由切换瞬时归零、前进后退恢复原位置。
+    */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-white text-slate-800 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-300;
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================================
+   滚动条明暗适配
+   ------------------------------------------------------------
+   浏览器默认滚动条在深色模式下仍是浅色轨道，与背景严重割裂。
+   同时使用标准属性（scrollbar-color / scrollbar-width）与 WebKit 伪元素，
+   兼顾新旧浏览器：Chrome 121+ / Firefox 认前者，旧版 Chrome / Safari 认后者。
+   ============================================================ */
+
+html {
+  scrollbar-color: var(--color-slate-300) transparent;
+}
+
+.dark {
+  scrollbar-color: var(--color-slate-700) transparent;
+}
+
+/* 内部滚动区域（目录、弹窗、宽表格、代码块）的滚动条收窄，避免抢占内容宽度 */
+.toc-scroll::-webkit-scrollbar,
+.thin-scroll::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,
+.prose-blog pre::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.toc-scroll::-webkit-scrollbar-track,
+.thin-scroll::-webkit-scrollbar-track,
+.table-scroll::-webkit-scrollbar-track,
+.prose-blog pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toc-scroll::-webkit-scrollbar-thumb,
+.thin-scroll::-webkit-scrollbar-thumb,
+.table-scroll::-webkit-scrollbar-thumb,
+.prose-blog pre::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: var(--color-slate-300);
+}
+
+.dark .toc-scroll::-webkit-scrollbar-thumb,
+.dark .thin-scroll::-webkit-scrollbar-thumb,
+.dark .table-scroll::-webkit-scrollbar-thumb,
+.dark .prose-blog pre::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-700);
+}
+
+.toc-scroll::-webkit-scrollbar-thumb:hover,
+.thin-scroll::-webkit-scrollbar-thumb:hover,
+.table-scroll::-webkit-scrollbar-thumb:hover,
+.prose-blog pre::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-400);
+}
+
+.dark .toc-scroll::-webkit-scrollbar-thumb:hover,
+.dark .thin-scroll::-webkit-scrollbar-thumb:hover,
+.dark .table-scroll::-webkit-scrollbar-thumb:hover,
+.dark .prose-blog pre::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-600);
+}
+
+/* 页面容器 */
+.page-container {
+  @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+}
+
+/* 阅读区容器 */
+.reading-container {
+  @apply mx-auto w-full max-w-3xl px-5 sm:px-8;
+}
+
+/* ============================================================
+   编辑式（Swiss / Editorial）排版基础设施
+   传统博客靠「卡片 + 圆角 + 阴影」划分区块；
+   这里改用「排版层级 + 数学化间距 + 细分割线」组织内容，
+   观感更接近纸质刊物，也更利于长文阅读。
+   ============================================================ */
+
+/* 等宽字体小标注：INDEX / 2026、SECTION 之类的元信息 */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-slate-500);
+}
+
+.dark .mono-label {
+  color: var(--color-slate-400);
+}
+
+/* 巨型标题：编辑式排版的视觉锚点，随视口缩放 */
+.display-title {
+  font-size: clamp(2.5rem, 7.5vw, 5.75rem);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+/* 细分割线：替代卡片边界 */
+.hairline {
+  border-top: 1px solid var(--color-slate-200);
+}
+
+.dark .hairline {
+  border-top-color: var(--color-slate-800);
+}
+
+/* ---------- 桌面端左侧固定 rail ---------- */
+
+.rail-offset {
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .rail-offset {
+    padding-left: 5.5rem;
+  }
+}
+
+.site-rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: none;
+  width: 5.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 1.75rem;
+  border-right: 1px solid var(--color-slate-200);
+  background-color: rgb(255 255 255 / 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.dark .site-rail {
+  border-right-color: var(--color-slate-800);
+  background-color: rgb(2 6 23 / 0.88);
+}
+
+@media (min-width: 1024px) {
+  .site-rail {
+    display: flex;
+  }
+}
+
+/* rail 导航项：图标在上、小字在下 */
+.rail-link {
+  display: flex;
+  width: 3.75rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding-block: 0.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ---------- 移动端底部导航 ---------- */
+
+.mobile-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  border-top: 1px solid var(--color-slate-200);
+  background-color: rgb(255 255 255 / 0.94);
+  backdrop-filter: blur(12px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.dark .mobile-dock {
+  border-top-color: var(--color-slate-800);
+  background-color: rgb(2 6 23 / 0.94);
+}
+
+@media (min-width: 1024px) {
+  .mobile-dock {
+    display: none;
+  }
+}
+
+/* 为移动端底部导航预留空间，避免页脚被遮挡 */
+.dock-clearance {
+  padding-bottom: 4.75rem;
+}
+
+@media (min-width: 1024px) {
+  .dock-clearance {
+    padding-bottom: 0;
+  }
+}
+
+/* 卡片 */
+.card-surface {
+  @apply rounded-2xl border border-slate-200 bg-white transition-colors duration-200;
+  @apply dark:border-slate-800 dark:bg-slate-900;
+}
+
+.card-surface:hover {
+  @apply border-slate-300 dark:border-slate-700;
+}
+
+/* 按钮 */
+.btn {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200;
+  @apply disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply bg-brand-600 text-white hover:bg-brand-700;
+}
+
+.btn-ghost {
+  @apply border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  @apply dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+}
+
+/* 标签徽章 */
+.badge {
+  @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  @apply bg-slate-100 text-slate-600;
+  @apply dark:bg-slate-800 dark:text-slate-300;
+}
+
+.badge-brand {
+  @apply bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300;
+}
+
+/* 输入框 */
+.field {
+  @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors duration-200;
+  @apply placeholder:text-slate-400 focus:border-brand-500 focus:outline-none;
+  @apply dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
+}
+
+/* 文章正文排版 */
+.prose-blog {
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--color-slate-700);
+}
+
+.dark .prose-blog {
+  color: var(--color-slate-300);
+}
+
+.prose-blog > * + * {
+  margin-top: 1.25em;
+}
+
+.prose-blog h2,
+.prose-blog h3,
+.prose-blog h4 {
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-slate-900);
+  scroll-margin-top: 6rem;
+}
+
+.dark .prose-blog h2,
+.dark .prose-blog h3,
+.dark .prose-blog h4 {
+  color: var(--color-slate-100);
+}
+
+/* ============================================================
+   全局字体颜色（用户自定义，变量由 useTextColor 写在 <html> 上）
+   ------------------------------------------------------------
+   为什么不去改 --color-slate-* 变量：
+   Tailwind v4 里 text-slate-900 与 bg-slate-900 引用的是**同一个**变量，
+   改了会把背景色一起改掉。
+   因此这里按「类名前缀」匹配文本色工具类做覆盖，只作用于文字；
+   层级用 color-mix 降低不透明度来还原，避免所有文字糊成同一个亮度。
+   ============================================================ */
+
+html[data-text-color] [class*='text-slate-9'],
+html[data-text-color] [class*='text-slate-8'] {
+  color: var(--user-text-color);
+}
+
+html[data-text-color] [class*='text-slate-7'],
+html[data-text-color] [class*='text-slate-6'] {
+  color: color-mix(in oklab, var(--user-text-color) 86%, transparent);
+}
+
+html[data-text-color] [class*='text-slate-5'],
+html[data-text-color] [class*='text-slate-4'] {
+  color: color-mix(in oklab, var(--user-text-color) 70%, transparent);
+}
+
+html[data-text-color] [class*='text-slate-3'],
+html[data-text-color] [class*='text-slate-2'] {
+  color: color-mix(in oklab, var(--user-text-color) 54%, transparent);
+}
+
+/* .prose-blog 的颜色是直接引用变量值的，不走 Tailwind 工具类，需单独覆盖 */
+html[data-text-color] .prose-blog {
+  color: color-mix(in oklab, var(--user-text-color) 88%, transparent);
+}
+
+html[data-text-color] .prose-blog h2,
+html[data-text-color] .prose-blog h3,
+html[data-text-color] .prose-blog h4,
+html[data-text-color] .prose-blog strong {
+  color: var(--user-text-color);
+}
+
+html[data-text-color] .prose-blog blockquote {
+  color: color-mix(in oklab, var(--user-text-color) 82%, transparent);
+}
+
+.prose-blog h2 {
+  font-size: 1.5rem;
+  margin-top: 2.4em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--color-slate-200);
+}
+
+.dark .prose-blog h2 {
+  border-bottom-color: var(--color-slate-800);
+}
+
+.prose-blog h3 {
+  font-size: 1.25rem;
+  margin-top: 2em;
+}
+
+.prose-blog h4 {
+  font-size: 1.0625rem;
+  margin-top: 1.6em;
+}
+
+.prose-blog a {
+  color: var(--color-brand-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.prose-blog a:hover {
+  color: var(--color-brand-700);
+}
+
+.dark .prose-blog a {
+  color: var(--color-brand-400);
+}
+
+.prose-blog strong {
+  font-weight: 600;
+  color: var(--color-slate-900);
+}
+
+.dark .prose-blog strong {
+  color: var(--color-slate-100);
+}
+
+.prose-blog ul,
+.prose-blog ol {
+  padding-left: 1.5em;
+}
+
+.prose-blog ul {
+  list-style: disc;
+}
+
+.prose-blog ol {
+  list-style: decimal;
+}
+
+.prose-blog li + li {
+  margin-top: 0.4em;
+}
+
+.prose-blog li::marker {
+  color: var(--color-slate-400);
+}
+
+.prose-blog blockquote {
+  padding-left: 1.1em;
+  border-left: 3px solid var(--color-brand-300);
+  color: var(--color-slate-600);
+  font-style: italic;
+}
+
+.dark .prose-blog blockquote {
+  border-left-color: var(--color-brand-700);
+  color: var(--color-slate-400);
+}
+
+.prose-blog img {
+  border-radius: 0.75rem;
+  margin-inline: auto;
+}
+
+.prose-blog hr {
+  border-color: var(--color-slate-200);
+  margin-block: 2.5em;
+}
+
+.dark .prose-blog hr {
+  border-color: var(--color-slate-800);
+}
+
+/* 行内代码 */
+.prose-blog :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.2em 0.45em;
+  border-radius: 0.375rem;
+  background-color: var(--color-slate-100);
+  color: var(--color-brand-700);
+}
+
+.dark .prose-blog :not(pre) > code {
+  background-color: var(--color-slate-800);
+  color: var(--color-brand-300);
+}
+
+/* 代码块 */
+.prose-blog pre {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  padding: 1.15rem 1.25rem;
+  border-radius: 0.875rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-slate-200);
+  /* 兜底背景：高亮失败降级的代码块没有内联样式，靠这里保证两种模式下都有底色。
+     shiki 正常输出的代码块带内联 background-color，内联样式优先级更高，不受影响。 */
+  background-color: var(--color-slate-50);
+}
+
+.dark .prose-blog pre {
+  border-color: var(--color-slate-800);
+  background-color: var(--color-slate-900);
+}
+
+.prose-blog pre code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+}
+
+/* 表格：由 markdown 渲染器包一层 .table-scroll，列数多时横向滚动而不是撑破版心 */
+.table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.prose-blog table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.prose-blog th,
+.prose-blog td {
+  border: 1px solid var(--color-slate-200);
+  padding: 0.6em 0.85em;
+  text-align: left;
+}
+
+.dark .prose-blog th,
+.dark .prose-blog td {
+  border-color: var(--color-slate-800);
+}
+
+.prose-blog thead th {
+  background-color: var(--color-slate-50);
+  font-weight: 600;
+}
+
+.dark .prose-blog thead th {
+  background-color: var(--color-slate-900);
+}
+
+/* Shiki 双主题支持 */
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* 淡入动画 */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s ease-out both;
+}
+
+/* 页面切换过渡（配合 nuxt.config 的 app.pageTransition） */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/*
+ * 动态背景之上的内容蒙层。
+ * 首屏顶部保持较高透明度（Vanta 背景清晰可见），向下逐渐加深以保证长文可读性。
+ */
+.main-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.18) 0,
+    rgb(255 255 255 / 0.82) 420px,
+    rgb(255 255 255 / 0.88) 100%
+  );
+}
+
+.dark .main-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgb(2 6 23 / 0.32) 0,
+    rgb(2 6 23 / 0.88) 420px,
+    rgb(2 6 23 / 0.92) 100%
+  );
+}
+
+/* ===== NProgress 主题适配（覆盖其自带样式中的 #29d） ===== */
+#nprogress .bar {
+  background: var(--color-brand-600) !important;
+  height: 3px !important;
+}
+
+#nprogress .peg {
+  box-shadow:
+    0 0 10px var(--color-brand-500),
+    0 0 6px var(--color-brand-500) !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: var(--color-brand-600) !important;
+  border-left-color: var(--color-brand-600) !important;
+}
+
+.dark #nprogress .bar {
+  background: var(--color-brand-400) !important;
+}
+
+.dark #nprogress .peg {
+  box-shadow:
+    0 0 10px var(--color-brand-400),
+    0 0 6px var(--color-brand-400) !important;
+}
+
+.dark #nprogress .spinner-icon {
+  border-top-color: var(--color-brand-400) !important;
+  border-left-color: var(--color-brand-400) !important;
+}
+
+@media (max-width: 640px) {
+  #nprogress .bar {
+    height: 2px !important;
+  }
+}

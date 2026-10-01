@@ -1,0 +1,24 @@
+node_modules
+*.log*
+.nuxt
+.nitro
+.cache
+.output
+.output-bak*
+.data
+dist
+.env
+.env.*
+!.env.example
+.DS_Store
+prisma/*.db
+
+# 本地上传的图片（生产环境请改用对象存储）
+public/uploads
+
+# 从文档库导入的附件（由 scripts/import-docs.mjs 生成）
+public/downloads
+
+# AI 助手本地数据与调试快照
+.codebuddy/
+.playwright-cli/

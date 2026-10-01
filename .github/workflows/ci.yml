@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    name: 类型检查 / 单元测试 / 构建
+    runs-on: ubuntu-latest
+
+    env:
+      # CI 中不连真实数据库，仅需让 Prisma 能解析 datasource
+      DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/ci_blog
+      NUXT_SESSION_PASSWORD: ci-session-password-placeholder-32chars
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 生成 Prisma Client
+        run: npx prisma generate
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: 单元测试
+        run: npm test
+
+      - name: 生产构建
+        run: npm run build

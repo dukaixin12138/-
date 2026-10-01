@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  email        String?  @unique @db.VarChar(191)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  nickname     String?  @db.VarChar(50)
+  avatar       String?  @db.VarChar(500)
+  bio          String?  @db.VarChar(300)
+  role         String   @default("author") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  posts    Post[]
+  comments Comment[]
+
+  @@map("users")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(80)
+  desc      String?  @db.VarChar(200)
+  sort      Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(200)
+  slug        String    @unique @db.VarChar(200)
+  summary     String?   @db.VarChar(500)
+  content     String    @db.LongText
+  cover       String?   @db.VarChar(500)
+  status      String    @default("draft") @db.VarChar(20)
+  views       Int       @default(0)
+  featured    Boolean   @default(false)
+  readingTime Int       @default(0) @map("reading_time")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  authorId   Int  @map("author_id")
+  categoryId Int? @map("category_id")
+
+  author   User      @relation(fields: [authorId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  tags     PostTag[]
+  comments Comment[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@map("posts")
+}
+
+model PostTag {
+  postId Int @map("post_id")
+  tagId  Int @map("tag_id")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  author    String   @db.VarChar(50)
+  email     String?  @db.VarChar(191)
+  content   String   @db.Text
+  status    String   @default("approved") @db.VarChar(20)
+  /// 提交者 IP，用于反垃圾与频率限制
+  ip        String?  @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postId   Int  @map("post_id")
+  userId   Int? @map("user_id")
+  parentId Int? @map("parent_id")
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User?     @relation(fields: [userId], references: [id])
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@map("comments")
+}
+
+model Setting {
+  key   String @id @db.VarChar(50)
+  value String @db.Text
+
+  @@map("settings")
+}
+
+/// 登录尝试记录，用于防暴力破解（跨实例可靠，适合 Serverless）
+model LoginAttempt {
+  id        Int      @id @default(autoincrement())
+  ip        String   @db.VarChar(64)
+  username  String   @db.VarChar(50)
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ip, createdAt])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
